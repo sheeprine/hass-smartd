@@ -1,0 +1,86 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "S.M.A.R.T. Disk Monitor — Connection",
+        "description": "Enter the connection details for the remote host running smartmontools.",
+        "data": {
+          "host": "Hostname or IP address",
+          "port": "SSH port",
+          "username": "SSH username",
+          "auth_type": "Authentication method"
+        },
+        "data_description": {
+          "host": "The hostname or IP address of the remote Linux host.",
+          "port": "The SSH port (default 22).",
+          "username": "The SSH user that has permission to run smartctl.",
+          "auth_type": "Choose how to authenticate: password or SSH private key."
+        }
+      },
+      "password": {
+        "title": "S.M.A.R.T. Disk Monitor — Password",
+        "description": "Enter the SSH password for **{username}** on **{host}**.",
+        "data": {
+          "password": "SSH password"
+        }
+      },
+      "key": {
+        "title": "S.M.A.R.T. Disk Monitor — SSH Key",
+        "description": "Paste the PEM-encoded SSH private key for **{username}** on **{host}**.",
+        "data": {
+          "ssh_private_key": "SSH private key (PEM)"
+        },
+        "data_description": {
+          "ssh_private_key": "The full contents of your private key file (e.g. ~/.ssh/id_rsa)."
+        }
+      },
+      "devices": {
+        "title": "S.M.A.R.T. Disk Monitor — Devices",
+        "description": "Select the block devices to monitor on **{host}**.",
+        "data": {
+          "devices": "Devices to monitor"
+        },
+        "data_description": {
+          "devices": "Choose from the discovered devices, or type a device path manually (e.g. /dev/sda)."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the remote host. Check the hostname, port, and network connectivity.",
+      "invalid_auth": "Authentication failed. Check the username and credentials.",
+      "no_devices_selected": "Please select at least one device to monitor.",
+      "unknown": "An unexpected error occurred. See the Home Assistant logs for details."
+    },
+    "abort": {
+      "already_configured": "This host is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Temperature"
+      },
+      "power_on_hours": {
+        "name": "Power-on hours"
+      },
+      "reallocated_sectors": {
+        "name": "Reallocated sectors"
+      },
+      "pending_sectors": {
+        "name": "Pending sectors"
+      },
+      "uncorrectable_errors": {
+        "name": "Uncorrectable errors"
+      }
+    },
+    "binary_sensor": {
+      "health": {
+        "name": "SMART health",
+        "state": {
+          "on": "Problem detected",
+          "off": "Passed"
+        }
+      }
+    }
+  }
+}

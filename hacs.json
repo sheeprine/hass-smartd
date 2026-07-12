@@ -1,0 +1,5 @@
+{
+  "name": "S.M.A.R.T. Disk Monitor",
+  "render_readme": false,
+  "homeassistant": "2024.1.0"
+}
