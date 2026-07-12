@@ -137,7 +137,7 @@ class SmartdCoordinator(DataUpdateCoordinator):
         command: str,
     ) -> asyncssh.SSHCompletedProcess:
         """Run a command and return the completed process (never raises on non-zero)."""
-        return await conn.run(command)
+        return await conn.run(command, check=False)
 
     async def _fetch_device_data(
         self,
@@ -155,7 +155,11 @@ class SmartdCoordinator(DataUpdateCoordinator):
         #   bit 3 (8)  : SMART or ATA SMART status FAILED
         #   bits 4-7   : other info (self-test failures, errors logged, etc.)
         # Bits 0 and 1 indicate we cannot trust the output at all.
-        returncode = proc.exit_status or 0
+        returncode = (
+            getattr(proc, "exit_status", None)
+            or getattr(proc, "returncode", None)
+            or 0
+        )
         fatal_bits = returncode & 0b00000011  # bits 0 and 1
         if fatal_bits:
             _LOGGER.warning(
@@ -229,8 +233,8 @@ async def async_discover_devices(
         connect_kwargs["password"] = password
 
     async with asyncssh.connect(**connect_kwargs) as conn:
-        proc = await conn.run("smartctl --scan --json")
-        if (proc.exit_status or 0) != 0 or not proc.stdout:
+        proc = await conn.run("smartctl --scan --json", check=False)
+        if not proc.stdout:
             return []
         try:
             data = json.loads(proc.stdout)
