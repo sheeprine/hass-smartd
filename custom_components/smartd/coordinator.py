@@ -155,7 +155,7 @@ class SmartdCoordinator(DataUpdateCoordinator):
         #   bit 3 (8)  : SMART or ATA SMART status FAILED
         #   bits 4-7   : other info (self-test failures, errors logged, etc.)
         # Bits 0 and 1 indicate we cannot trust the output at all.
-        returncode = proc.returncode or 0
+        returncode = proc.exit_status or 0
         fatal_bits = returncode & 0b00000011  # bits 0 and 1
         if fatal_bits:
             _LOGGER.warning(
@@ -230,7 +230,7 @@ async def async_discover_devices(
 
     async with asyncssh.connect(**connect_kwargs) as conn:
         proc = await conn.run("smartctl --scan --json")
-        if proc.returncode != 0 or not proc.stdout:
+        if (proc.exit_status or 0) != 0 or not proc.stdout:
             return []
         try:
             data = json.loads(proc.stdout)
