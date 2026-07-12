@@ -135,9 +135,16 @@ class SmartdCoordinator(DataUpdateCoordinator):
         self,
         conn: asyncssh.SSHClientConnection,
         command: str,
-    ) -> asyncssh.SSHCompletedProcess:
-        """Run a command and return the completed process (never raises on non-zero)."""
-        return await conn.run(command, check=False)
+    ) -> tuple[str, int]:
+        """Run a command and return (stdout, exit_status). Never raises on non-zero."""
+        proc = await conn.create_process(command, encoding="utf-8")
+        stdout, _ = await proc.communicate()
+        exit_status = (
+            getattr(proc, "exit_status", None)
+            or getattr(proc, "returncode", None)
+            or 0
+        )
+        return stdout or "", exit_status
 
     async def _fetch_device_data(
         self,
@@ -145,8 +152,7 @@ class SmartdCoordinator(DataUpdateCoordinator):
         device: str,
     ) -> dict[str, Any]:
         """Fetch and parse SMART data for a single device."""
-        command = f"smartctl -a {device} --json"
-        proc = await self._run_command(conn, command)
+        stdout, returncode = await self._run_command(conn, f"smartctl -a {device} --json")
 
         # smartctl uses a bitmask exit code:
         #   bit 0 (1)  : command line parsing error
@@ -155,11 +161,6 @@ class SmartdCoordinator(DataUpdateCoordinator):
         #   bit 3 (8)  : SMART or ATA SMART status FAILED
         #   bits 4-7   : other info (self-test failures, errors logged, etc.)
         # Bits 0 and 1 indicate we cannot trust the output at all.
-        returncode = (
-            getattr(proc, "exit_status", None)
-            or getattr(proc, "returncode", None)
-            or 0
-        )
         fatal_bits = returncode & 0b00000011  # bits 0 and 1
         if fatal_bits:
             _LOGGER.warning(
@@ -170,7 +171,6 @@ class SmartdCoordinator(DataUpdateCoordinator):
             )
             return {"available": False, "device": device}
 
-        stdout = proc.stdout or ""
         if not stdout.strip():
             _LOGGER.warning("Empty output from smartctl for %s on %s", device, self._host)
             return {"available": False, "device": device}
@@ -233,11 +233,12 @@ async def async_discover_devices(
         connect_kwargs["password"] = password
 
     async with asyncssh.connect(**connect_kwargs) as conn:
-        proc = await conn.run("smartctl --scan --json", check=False)
-        if not proc.stdout:
+        proc = await conn.create_process("smartctl --scan --json", encoding="utf-8")
+        stdout, _ = await proc.communicate()
+        if not stdout:
             return []
         try:
-            data = json.loads(proc.stdout)
+            data = json.loads(stdout)
         except json.JSONDecodeError:
             return []
 
