@@ -1,10 +1,11 @@
 {
   "domain": "smartd",
   "name": "S.M.A.R.T. Disk Monitor",
-  "version": "0.1.0",
+  "codeowners": ["@sheeprine"],
   "config_flow": true,
   "documentation": "https://github.com/sheeprine/hass-smartd",
-  "requirements": ["asyncssh==2.18.0"],
   "iot_class": "local_polling",
-  "codeowners": ["@sheeprine"]
+  "issue_tracker": "https://github.com/sheeprine/hass-smartd/issues",
+  "requirements": ["asyncssh==2.18.0"],
+  "version": "0.1.0"
 }
