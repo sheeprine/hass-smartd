@@ -58,3 +58,43 @@ Or grant the capability directly to the binary:
 ```bash
 sudo setcap cap_sys_rawio+ep /usr/sbin/smartctl
 ```
+
+### Public key authentication
+
+Using a dedicated SSH key pair is recommended over password auth.
+
+**1. Generate a key pair** (on your Home Assistant host or any machine you control):
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/smartd_id -C "hass-smartd" -N ""
+```
+
+This creates `smartd_id` (private key) and `smartd_id.pub` (public key).
+
+**2. Authorize the public key on the remote host with command restriction:**
+
+Create a wrapper script that only allows `smartctl` invocations:
+
+```bash
+sudo tee /usr/local/bin/smartctl-wrapper > /dev/null << 'EOF'
+#!/bin/bash
+if [[ "$SSH_ORIGINAL_COMMAND" =~ ^smartctl[[:space:]] ]]; then
+    exec $SSH_ORIGINAL_COMMAND
+fi
+echo "Denied: $SSH_ORIGINAL_COMMAND" >&2
+exit 1
+EOF
+sudo chmod 755 /usr/local/bin/smartctl-wrapper
+```
+
+Then add the public key to `~/.ssh/authorized_keys` with a forced command and all other SSH features disabled:
+
+```bash
+mkdir -p ~/.ssh
+echo "restrict,command=\"/usr/local/bin/smartctl-wrapper\" $(cat ~/.ssh/smartd_id.pub)" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+
+With this setup, the key can only be used to run `smartctl` commands — interactive shells, port forwarding, and X11 forwarding are all blocked.
+
+**3. Paste the private key into the integration setup.** During the configuration flow, choose **SSH private key** as the authentication method and paste the contents of `~/.ssh/smartd_id` (the private key, not the `.pub` file). The integration expects PEM format; keys generated with `ssh-keygen` default to this format.
