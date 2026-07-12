@@ -203,31 +203,6 @@ class SmartdCoordinator(DataUpdateCoordinator):
             ) from err
 
 
-async def async_test_connection(
-    host: str,
-    port: int,
-    username: str,
-    auth_type: str,
-    password: str | None = None,
-    ssh_key_pem: str | None = None,
-) -> None:
-    """Test SSH connection and raise on failure."""
-    connect_kwargs: dict[str, Any] = {
-        "host": host,
-        "port": port,
-        "username": username,
-        "known_hosts": None,
-    }
-    if auth_type == AUTH_TYPE_KEY and ssh_key_pem:
-        connect_kwargs["client_keys"] = [asyncssh.import_private_key(ssh_key_pem)]
-        connect_kwargs["password"] = None
-    else:
-        connect_kwargs["password"] = password
-
-    async with asyncssh.connect(**connect_kwargs) as conn:
-        await conn.run("true", check=True)
-
-
 async def async_discover_devices(
     host: str,
     port: int,

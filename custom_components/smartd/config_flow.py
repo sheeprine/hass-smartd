@@ -28,7 +28,7 @@ from .const import (
     DEFAULT_PORT,
     DOMAIN,
 )
-from .coordinator import async_discover_devices, async_test_connection
+from .coordinator import async_discover_devices
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -227,7 +227,7 @@ class SmartdConfigFlow(ConfigFlow, domain=DOMAIN):
         Returns a dict of errors (empty means success).
         """
         try:
-            await async_test_connection(
+            self._discovered_devices = await async_discover_devices(
                 host=self._host,
                 port=self._port,
                 username=self._username,
@@ -244,23 +244,6 @@ class SmartdConfigFlow(ConfigFlow, domain=DOMAIN):
         except Exception:  # noqa: BLE001
             _LOGGER.exception("Unexpected error during SSH connection test")
             return {"base": "unknown"}
-
-        # Best-effort device discovery — don't fail the flow if unavailable
-        try:
-            self._discovered_devices = await async_discover_devices(
-                host=self._host,
-                port=self._port,
-                username=self._username,
-                auth_type=self._auth_type,
-                password=self._password,
-                ssh_key_pem=self._ssh_key_pem,
-            )
-        except Exception:  # noqa: BLE001
-            _LOGGER.debug(
-                "Device discovery failed for %s; user will enter devices manually",
-                self._host,
-            )
-            self._discovered_devices = []
 
         return {}
 
