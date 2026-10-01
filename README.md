@@ -79,7 +79,7 @@ Create a wrapper script that only allows `smartctl` invocations:
 sudo tee /usr/local/bin/smartctl-wrapper > /dev/null << 'EOF'
 #!/bin/bash
 if [[ "$SSH_ORIGINAL_COMMAND" =~ ^smartctl[[:space:]] ]]; then
-    exec $SSH_ORIGINAL_COMMAND
+    exec sudo $SSH_ORIGINAL_COMMAND
 fi
 echo "Denied: $SSH_ORIGINAL_COMMAND" >&2
 exit 1

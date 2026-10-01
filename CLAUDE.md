@@ -8,7 +8,7 @@ No build step — this is a Home Assistant custom component. To develop against 
 
 ```bash
 # Install HA and asyncssh in a virtual environment
-pip install homeassistant asyncssh==2.18.0
+pip install homeassistant asyncssh==2.24.0
 
 # For type checking
 pip install pyright
